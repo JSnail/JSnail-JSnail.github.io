@@ -103,9 +103,9 @@ gitment:
 # https://github.com/gitalk/gitalk#install
 gitalk:
     owner: JSnail
-    repo: blog-comments
-    clientID: 11128d295c6a1a4af0e8
-    clientSecret: 1d058ae72c5fdc5843764425c5ef7f4a55a2a8c3
+    repo: blog-comment
+    clientID: 36fb7ca4674e808981f9
+    clientSecret: cbe26b42dbaf83ccfdbd411f5801905a3d7dc210
 # 在使用其它评论组件时可点击显示 Disqus
 lazy_load_disqus : false
 
