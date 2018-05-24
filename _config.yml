@@ -2,7 +2,7 @@
 #   Main Configs   #
 # ---------------- #
 baseurl:
-url: https://www.jsnail.top
+url: http://www.jsnail.top
 date_format: "ordinal"
 title: 蜗牛
 subtitle: "锄宗逆贼"
