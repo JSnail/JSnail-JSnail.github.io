@@ -2,12 +2,12 @@
 #   Main Configs   #
 # ---------------- #
 baseurl:
-url: https://mazhuang.org
+url: https://www.jsnail.top
 date_format: "ordinal"
-title: 码志
-subtitle: "打码改变人生"
-description: "马壮的个人博客"
-keywords: 码志, Zhuang Ma, mzlogin, mazhuang
+title: 蜗牛
+subtitle: "锄宗逆贼"
+description: "蜗牛的个人博客"
+keywords: 蜗牛, Snail
 timezone: Asia/Shanghai
 encoding: "utf-8"
 side_bar_repo_limit: 5
@@ -15,12 +15,12 @@ side_bar_repo_limit: 5
 # ---------------- #
 #      Author      #
 # ---------------- #
-author: Zhuang Ma
-organization: zkh360.com
-organization_url: http://www.zkh360.com
-github_username: mzlogin
-location: Wuhan, China
-email: chumpma@gmail.com
+author: Snail
+organization: 
+organization_url: 
+github_username: JSnail
+location: ChenDu, China
+email: 484276447@qq.com
 
 # ---------------- #
 #    Navigation    #
@@ -81,7 +81,7 @@ collections:
         output: true
         permalink: /wiki/:path/
 
-repository: mzlogin/mzlogin.github.io
+repository: JSnail/JSnail.github.io
 
 # ---------------- #
 #      Comments    #
@@ -95,17 +95,17 @@ disqus:
     username: 
 # https://imsun.net/posts/gitment-introduction/
 gitment:
-    owner: mzlogin
-    repo: blog-comments
+    owner: 
+    repo: 
     oauth:
-        client_id: d2e1cbbd298958076462
-        client_secret: b42a4178e5fd4a7cf63189ef4b1453b05c375709
+        client_id: 
+        client_secret: 
 # https://github.com/gitalk/gitalk#install
 gitalk:
-    owner: mzlogin
+    owner: JSnail
     repo: blog-comments
-    clientID: d2e1cbbd298958076462
-    clientSecret: b42a4178e5fd4a7cf63189ef4b1453b05c375709
+    clientID: 11128d295c6a1a4af0e8
+    clientSecret: 1d058ae72c5fdc5843764425c5ef7f4a55a2a8c3
 # 在使用其它评论组件时可点击显示 Disqus
 lazy_load_disqus : false
 
