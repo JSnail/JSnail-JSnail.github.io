@@ -1,0 +1,19 @@
+---
+layout:     post
+title:      "android知识整理"
+subtitle:  "activity启动流程"
+date:       2018-03-05 01:00:10
+author:     "Snail"
+---
+在android中，启动一个activity有两种操作，一种是点击应用程序的图标，另外一种就是跳转的时候启动。
+
+当一个应用程序开始运行的时候，MainActivity组件是由Launcher组件来启动的，而Launcher组件又是通过Activity管理服务activityManagerService来启动MainActivity组件的，由于以上三者是在不同进程中运行的，因此MainActivity组件的启动就涉及了3个进程，通过Binder进程间通信来进行交互。
+
+Launcher组件启动MAinActivity组件的过程如下：
+
+1. Launcher组件向ActivityManagerService发送一个启动MAinActivity组件的进程间通信请求。
+2. ActivityManagerService首先将要启动的MAinActivity组件的信息保存下来，然后再向Launcher组件发送一个进入中止状态的进程间通信请求。
+3. Launcher组件进入中止状态之后，就会向ActivityManagerService发送一个已经进入中止状态的进程间通信请求，以便ActivityManagerService可以继续执行启动MainActivity组件的操作。
+4. ActivityManagerService发现用来运行Mainactivity组件的应用程序进程不存在，就会先启动一个新的应用程序进程。
+5. 新的应用程序进程启动完成之后，就会向ActivityManagerService发送一个启动完成的进程间通信请求，以便ActivityManagerService可以继续执行启动MainActivity的组件操作。
+6. ActivityManagerService将第二步保存下来的MainActivity组件信息发送给第四步创建 的应用程序进程，以便他可以将MainActivity组件启动起来。

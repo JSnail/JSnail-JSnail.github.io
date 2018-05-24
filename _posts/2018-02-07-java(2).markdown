@@ -1,0 +1,58 @@
+---
+layout: post
+title: java基础知识整理（二）
+categories: Java
+description: java基础知识整理（而）
+keywords: Java, 反射,StringBuilder, StringBuffer
+---
+
+
+
+### 1.String、StringBuffer、StringBuilder区别
+1. 可变和不可变
+
+  String类中使用字符数组保存字符串,并且由final修饰，是不可变的
+
+		private final char value[];
+	
+  StringBuilder和StringBuffer的父类是AbstractStringBuilder，同样是使用字符数组保存字符串，但是没有用final修饰
+
+		char[] value;
+由于string一旦创建之后不可修改，所以每次拼接字符串都是在重新创建一个string对象，jvm会频繁的gc因此在有很多字符串拼接的时候不用考虑string，运行效率低于后面2个。
+
+2. 线程安全
+
+	StringBuilder是线程不安全的，而StringBuffer是线程安全的。
+
+### 2.final，finally，finalize的区别
+
+1. final修饰符
+
+- 被final修饰的类是不能再作为父类而被子类继承，因此一个类也不能同时被abstract修饰又被final修饰。
+- 方法被final修饰，可以保证他们在使用的过程中不被修改，只能被调用，不能被重写
+- 变量被final修饰，必须在初始化的时候赋值，同样只能被读取不能被修改
+
+2. finally 
+
+	用于异常处理时来执行的操作，不论异常块代码是否有异常抛出、捕获，都一定会执行finally的代码块
+
+3. finalize
+
+	finalize是object中的一个方法，子类可以重写此方法实现对资源的回收。垃圾回收只负责回收内存，并不负责资源的回收，Java虚拟机在垃圾回收之前会先调用垃圾对象的finalize方法用于使对象释放资源（如关闭连接、关闭文件），之后才进行垃圾回收，这个方法一般不会显示的调用，在垃圾回收时垃圾回收器会主动调用。
+	
+
+### 3.泛型中extends和super的区别
+
+在泛型的使用中经常会使用到<	? extends T >和< ? super T>，前者表示T在内的所有子类，后者表示T在内的任何T的父类，分别表示通配符的上限和下限。
+
+### 4.Serializable 和Parcelable 的区别
+在进行android开发的时候，需要传递一个对象的引用传递到一个页面的时候，需要将该对象放入intent或者bundle里面包装之后才能传递，此时就需要进行序列化的操作。
+
+- Serializable
+
+	使用Serializable序列化的操作十分简单，只需要实现Serializable接口就可以，但是由于使用的是反射，在序列化的时候会产生大量的临时对象，容易频繁的触发垃圾回收，而且是使用的IO读写存储在磁盘上，效率相对偏低。
+
+- Parcelable
+
+   Parcelable是直接在内存中序列化，速度远高于Serializable，同时也产生了一个问题，由于Parcelable不能把数据保存在磁盘上，不能很好的保证数据在有外接变化的情况下的持久性，此时就需要考虑使用Serializable
+

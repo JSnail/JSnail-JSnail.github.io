@@ -1,0 +1,97 @@
+---
+layout: post
+title: java基础知识整理（三）
+categories: Java
+description: java基础知识整理（三）
+keywords: Java, 反射
+---
+
+
+
+反射他运行中的java程序获取自身的信息，并且能够操作类和对象内部的属性，其中的核心是在运行过程中动态加载类或者调用方法等，不需要事先知道运行的对象是谁。
+
+#### 1.获取Class对象的三种方法
+
+- 调用对象的getClass()方法，例如：
+
+		Test test = new Test();
+		Class<?> cls = test.getClass();
+
+- 使用Class类的forName()静态方法
+
+		 public static Class<?> forName(String 				className)
+		 
+		 Class<?> cls = Class.forName(“xxx.test”);//此处为类的路径 
+
+- 直接获取对象的Class
+
+		Class<?> cls = Test.class;
+
+
+
+#### 2.创建实例 
+
+- 使用Class的对象的newInstance()方法来创建Class对象对应类的实例
+
+		  Class<?> c = String.class;
+               try {
+          		  Object str = c.newInstance();
+                   } catch (InstantiationException e) {
+                            e.printStackTrace();
+                   } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+               }
+		
+
+- 通过Class对象获取指定的Constructor对象，再调用他的newInstance()方法创建实例。
+
+		获取单个的方法
+		public Constructor getConstructor(Class... 		parameterTypes)；获取单个的"公有的"构造方法：
+		
+		public Constructo getDeclaredConstructor(Class... parameterTypes)；获取"某个构造方法"可以是私有的，或受保护、默认、公有；
+		
+		public Method[] getMethods()；//返回所有的公用的方法
+		
+		public Method[] getDeclaredMethods()；//返回类或接口声明的所有方法，包括公共、保护、默认（包）访问和私有方法，但不包括继承的方法。
+			
+			public Method getMethod(String name, Class<?>... parameterTypes)；//返回特定的方法；两个参数分别为方法名和方法对应的对象
+			2、获得字段信息的方法Field getField(String name) -- 获得命名的公共字段 
+ 
+		Field[] getFields();获得类的所有公共字段 
+ 
+		Field getDeclaredField(String name)；// 获得类声明的命名的字段 
+ 
+		Field[] getDeclaredFields();// 获得类声明的所有字段
+
+
+#### 3.获取构造器信息
+
+	通过Class类获取到Constructor的实例，然后通过Constructor的getInstance()方法获取到相应的对象实例。
+
+			public T newInstance(Object... initargs) 
+ 
+#### 4.调用方法
+
+	当从类中获取方法之后，可以通过invoke()方法来调用
+
+		public Object invoke(Object obj, Object... args)
+		
+		public class Test {  public static void 				main(String[] args) 				throws IllegalAccessException, 					InstantiationException, 			NoSuchMethodException, InvocationTargetException {
+        Class<?> cls = math.class;
+        Object obj = cls.newInstance();
+        //获取add方法
+        Method method = cls.getMethod("add",int.class,int.class);
+        //调用add(1,4)
+        Object result = method.invoke(obj,1,4);
+        System.out.println(result);
+         }
+         }
+
+		class math {
+		 public int add(int a,int b) {
+        	return a+b;
+         }
+        public int sub(int a,int b) {
+          return a+b; 
+          }
+         }

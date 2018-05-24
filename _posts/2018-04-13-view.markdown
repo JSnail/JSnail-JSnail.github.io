@@ -1,0 +1,479 @@
+---
+layout: post
+title: View的绘制流程
+categories: Android
+description: View的绘制流程
+keywords: 绘制,View,view
+---
+
+### 1.Activity的构成
+当一个activity被创建的时候，在oncreate方法中会调用setContentView()方法，那么他里面是怎么实现的呢？（基于‘com.android.support:appcompat-v7:26.1.0’）
+
+	
+	@Override
+    public void setContentView(@LayoutRes int layoutResID) {
+        getDelegate().setContentView(layoutResID);
+    }
+
+发现是由一个代理类实现的setContentView()方法，接着点下去
+
+	@Override
+    public void setContentView(int resId) {
+        ensureSubDecor();//注释1
+        ViewGroup contentParent = (ViewGroup) mSubDecor.findViewById(android.R.id.content);
+        contentParent.removeAllViews();
+        LayoutInflater.from(mContext).inflate(resId, contentParent);
+        mOriginalWindowCallback.onContentChanged();
+    }
+
+注释一处的方法里面得到了下方代码找到contentParent所在的viewGroup
+
+	private void ensureSubDecor() {
+        if (!mSubDecorInstalled) {
+            mSubDecor = createSubDecor();//注释1
+
+            // If a title was set before we installed the decor, propagate it now
+            CharSequence title = getTitle();
+            if (!TextUtils.isEmpty(title)) {
+                onTitleChanged(title);
+            }
+
+            applyFixedSizeWindow();
+	}
+
+applyFixedSizeWindow()会根据屏幕重新适配content的大小。查看注释一处的方法发现了如下代码
+
+	 mWindow.getDecorView();
+
+那这个mWindow又是什么呢，最后在Activity的attach()的方法中发现了mWindow
+
+	
+    final void attach(Context context, ActivityThread aThread,
+            Instrumentation instr, IBinder token, int ident,
+            Application application, Intent intent, ActivityInfo info,
+            CharSequence title, Activity parent, String id,
+            NonConfigurationInstances lastNonConfigurationInstances,
+            Configuration config, String referrer, IVoiceInteractor voiceInteractor,
+            Window window, ActivityConfigCallback activityConfigCallback) {
+        attachBaseContext(context);
+
+        mFragments.attachHost(null /*parent*/);
+
+        mWindow = new PhoneWindow(this, window, activityConfigCallback);
+        }
+
+而PhoneWindow是继承抽象类Window
+
+	@Override
+    public void setContentView(int layoutResID) {
+        // Note: FEATURE_CONTENT_TRANSITIONS may be set in the process of installing the window
+        // decor, when theme attributes and the like are crystalized. Do not check the feature
+        // before this happens.
+        if (mContentParent == null) {
+            //创建DecorView，并添加到mContentParent上
+            installDecor();
+        } else if (!hasFeature(FEATURE_CONTENT_TRANSITIONS)) {
+            mContentParent.removeAllViews();
+        }
+
+        if (hasFeature(FEATURE_CONTENT_TRANSITIONS)) {
+            final Scene newScene = Scene.getSceneForLayout(mContentParent, layoutResID,
+                    getContext());
+            transitionTo(newScene);
+        } else {
+            //将要加载的资源添加到mContentParent上
+            mLayoutInflater.inflate(layoutResID, mContentParent);
+        }
+        mContentParent.requestApplyInsets();
+        final Callback cb = getCallback();
+        if (cb != null && !isDestroyed()) {
+           //回调通知表示完成界面加载
+            cb.onContentChanged();
+        }
+    }
+
+查看installDecor()方法中做了什么
+
+	private void installDecor() {
+        if (mDecor == null) {
+        
+            mDecor = generateDecor();//注释
+            mDecor.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+            mDecor.setIsRootNamespace(true);
+            if (!mInvalidatePanelMenuPosted && mInvalidatePanelMenuFeatures != 0) {
+                mDecor.postOnAnimation(mInvalidatePanelMenuRunnable);
+            }
+        }
+        //一开始DecorView未加载到mContentParent，所以此时mContentParent=null
+        if (mContentParent == null) {
+        //该方法将mDecorView添加到Window上绑定布局
+            mContentParent = generateLayout(mDecor);
+
+            // Set up decor part of UI to ignore fitsSystemWindows if appropriate.
+            mDecor.makeOptionalFitsSystemWindows();
+
+            final DecorContentParent decorContentParent = (DecorContentParent) mDecor.findViewById(
+                    R.id.decor_content_parent);
+	}
+    }
+	
+
+查看标记注释的方法generateDecor()
+
+	protected DecorView generateDecor() {
+        return new DecorView(getContext(), -1);
+    }
+
+创建完后再通过调用generateLayout将setContentView内容添加到mContentParent，后续代码过长，截取关键代码
+
+	 TypedArray a = getWindowStyle();//注释1
+       
+      if(a.getBoolean(R.styleable.Window_windowNoTitle, false)) {
+            requestFeature(FEATURE_NO_TITLE);
+        } else if (a.getBoolean(R.styleable.Window_windowActionBar, false)) {
+            // Don't allow an action bar if there is no title.
+            requestFeature(FEATURE_ACTION_BAR);
+        }
+        ······
+        int layoutResource;
+      	int features = getLocalFeatures();
+       
+        if ((features & (1 << FEATURE_SWIPE_TO_DISMISS)) != 0) {
+            layoutResource = R.layout.screen_swipe_dismiss;
+        } 
+        } else {
+            // Embedded, so no decoration is needed.
+            layoutResource = R.layout.screen_simple;
+            // System.out.println("Simple!");
+        }
+		//注释2
+	   View in = mLayoutInflater.inflate(layoutResource, null);
+        decor.addView(in, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+        mContentRoot = (ViewGroup) in;
+        ViewGroup contentParent = (ViewGroup)findViewById(ID_ANDROID_CONTENT);
+
+- 注释1 处的地方表示了该方法会首先根据当前用户设置的主题去设置对应的feature,然后（注释2）根据再加载相应的布局。(Window.FEATURE_NO_TITLE)接下来通过getLocalFeatures来获取你设置的feature，然后选择加载相应的布局，这也就是为什么我们要在setContentView之前调用requesetFeature的原因。
+
+		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:fitsSystemWindows="true"
+	    android:orientation="vertical">
+	    <ViewStub android:id="@+id/action_mode_bar_stub"
+	              android:inflatedId="@+id/action_mode_bar"
+	              android:layout="@layout/action_mode_bar"
+	              android:layout_width="match_parent"
+	              android:layout_height="wrap_content"
+	              android:theme="?attr/actionBarTheme" />
+	    <FrameLayout
+	         android:id="@android:id/content"
+	         android:layout_width="match_parent"
+	         android:layout_height="match_parent"
+	         android:foregroundInsidePadding="false"
+	         android:foregroundGravity="fill_horizontal|top"
+	         android:foreground="?android:attr/windowContentOverlay" />
+		</LinearLayout>
+
+至此就明白了一个activity是一个window对象，这个对象是由PhoneWindow来实现的。PhoneWindow把DecorView作为整个应用窗口
+的顶级View，而DercorView又将屏幕分为两个区域，一个是TitleView,一个是contentView，也就是平时写布局的位置。
+
+### 2.View的绘制相关
+view的绘制主要有三大流程分别为measure、layout、draw
+
+#### 2.1 View的工作流程
+在上面说过DecorView被创建之后，需要被加载进window之后才能显示出来。
+
+
+- DecorView被加载到Window中
+
+当一个Activity通过startActivity启动的时候，最终调用到的是ActivityThread中的handleLaunchActivity()方法来创建
+
+	
+    private void handleLaunchActivity(ActivityClientRecord r, Intent customIntent, String reason) {
+       ····
+
+        Activity a = performLaunchActivity(r, customIntent);//注释1
+
+        if (a != null) {
+            r.createdConfig = new Configuration(mConfiguration);
+            reportSizeConfigurations(r);
+            Bundle oldState = r.state;
+            handleResumeActivity(r.token, false, r.isForward,!r.activity.mFinished && !r.startsNotResumed, r.lastProcessedSeq, reason);//注释2
+                    ···
+        }
+
+注释1处的方法在里面会调用到onCreate方法，完成DecorView的创建，然后调用注释2处的handleResumeActivity()方法
+
+	
+    final void handleResumeActivity(IBinder token,
+            boolean clearHide, boolean isForward, boolean reallyResume, int seq, String reason) {
+            
+              r = performResumeActivity(token, clearHide, reason);
+
+        if (r != null) {
+            final Activity a = r.activity;
+
+		···
+            if (r.window == null && !a.mFinished && willBeVisible) {
+                r.window = r.activity.getWindow();
+                View decor = r.window.getDecorView();
+                decor.setVisibility(View.INVISIBLE);
+                ViewManager wm = a.getWindowManager();
+                WindowManager.LayoutParams l = r.window.getAttributes();
+                a.mDecor = decor;
+                l.type = WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
+                l.softInputMode |= forwardBit;
+                if (r.mPreserveWindow) {
+                    a.mWindowAdded = true;
+                    r.mPreserveWindow = false;
+                    ViewRootImpl impl = decor.getViewRootImpl();
+                    if (impl != null) {
+                        impl.notifyChildRebuilt();
+                    }
+                }
+                if (a.mVisibleFromClient) {
+                    if (!a.mWindowAdded) {
+                        a.mWindowAdded = true;
+                        wm.addView(decor, l);
+                    } else {
+     				    a.onWindowAttributesChanged(l);
+                    }
+                }
+             }
+在上面的代码中会执行performResumeActivity()，从而调用到Activity中的onResume方法，在后面的代码中得到了WindowManager,他是一个接口并且继承与ViewManager,然后调用WindowManager的addview方法，他的实现类是WindowManagerImpl。
+
+	public final class WindowManagerImpl implements WindowManager {
+    private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
+    private final Display mDisplay;
+    private final Window mParentWindow;
+     @Override
+    public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
+        applyDefaultToken(params);
+        mGlobal.addView(view, params, mDisplay, mParentWindow);
+    }
+    ...
+     @Override
+    public void removeView(View view) {
+        mGlobal.removeView(view, false);
+    }
+	}
+
+在addView方法中又调用了WindowManagerGlobal的addview方法
+
+	 public void addView(View view, ViewGroup.LayoutParams params,  
+        Display display, Window parentWindow) {
+        ···
+	       root = new ViewRootImpl(view.getContext(), display);  
+          view.setLayoutParams(wparams);  
+  
+        mViews.add(view);  
+        mRoots.add(root);  
+        mParams.add(wparams);  
+    }  
+ 
+    try {  
+        root.setView(view, wparams, panelParentView);  
+    } catch (RuntimeException e) {  
+        // BadTokenException or InvalidDisplayException, clean up.  
+        synchronized (mLock) {  
+            final int index = findViewLocked(view, false);  
+            if (index >= 0) {  
+                removeViewLocked(index, true);  
+            }  
+        }  
+        throw e;  
+    }  
+    ···
+    }
+   ViewRootImpl执行了setView()方法将DecorView加载到了window中。
+
+
+#### 2.2 MeasureSpec 
+
+MeasureSpec是一个32位的int值，高2位表示测量模式（SpecMode），低30位表示SpecSize,用于表示各种测量模式下的大小
+
+    public static int makeMeasureSpec(@IntRange(from = 0, to = (1 << MeasureSpec.MODE_SHIFT) - 1) int size,@MeasureSpecMode int mode) {
+            if (sUseBrokenMakeMeasureSpec) {
+                return size + mode;
+            } else {
+                return (size & ~MODE_MASK) | (mode & MODE_MASK);
+            }
+        }
+             @MeasureSpecMode
+        public static int getMode(int measureSpec) {
+            return (measureSpec & MODE_MASK);
+        }
+
+     
+        public static int getSize(int measureSpec) {
+            return (measureSpec & ~MODE_MASK);
+        }
+
+SpecMode有三类，都有着各自的含义
+
+- EXACTLY 父容器已经计算出View需要的大小，SpecSzie指定的大小就是当前View的大小，对应LayoutParams中的具体定义的大小和MATCH_PARENT
+- AT_ MOST 父容器指定了一个可以使用的大小即SpecSize,也是view的最大值，对应LayoutParams中的具体定义的大小和WRAP_CONTENT
+- UNSPECIFIED 父容器不对view现在大小，多用于系统内部测量
+
+#### 2.3 MeasureSpec和LayoutParams的关系
+
+MeasureSpec由LayoutParams和容器一起决定，对DecorView他的MeasureSpec是由自己的LayoutParams和屏幕的大小来决定的。因此当MeasureSpec确定之后，onMeasure中就可以确定view的测量宽高了
+总结如下
+
+
+![avatar](https://github.com/JSnail/JSnail.github.io/raw/master/img/measureSpec.png)
+
+
+### 3 View的工作流程
+
+#### 3.1 measure
+如果只是一个View的话measure方法就完成了对他大小的测量，如果是个viewgroup的话，除了需要完成对自己的测量之外还需要去遍历调用所有子元素的measure方法
+
+
+- View的measure方法
+
+	在View的measure方法中回去调用他的onMeasure方法，他的实现是
+
+	    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),
+                getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));
+           }
+
+所以只需要关注getDefaultSize()、getSuggestedMinimumWidth()和getSuggestedMinimumHeight()三个方法，首先查看getDefaultSize()
+
+	 public static int getDefaultSize(int size, int measureSpec) {
+        int result = size;
+        int specMode = MeasureSpec.getMode(measureSpec);
+        int specSize = MeasureSpec.getSize(measureSpec);
+
+        switch (specMode) {
+        case MeasureSpec.UNSPECIFIED:
+            result = size;
+            break;
+        case MeasureSpec.AT_MOST:
+        case MeasureSpec.EXACTLY:
+            result = specSize;
+            break;
+        }
+        return result;
+    }
+
+可以看出正常情况下，view的宽高都是measureSpec中的specSize，值得注意的是，所有view的大小都是在onlayout阶段确定的，只是他们的大小几乎是相等的
+
+	protected int getSuggestedMinimumWidth() {
+        return (mBackground == null) ? mMinWidth : max(mMinWidth, mBackground.getMinimumWidth());
+    }
+    
+    protected int getSuggestedMinimumHeight() {
+        return (mBackground == null) ? mMinHeight : max(mMinHeight, mBackground.getMinimumHeight());
+
+    }
+
+从以上代码可以看出，要是View没有设置背景,那么View的宽度就是mMinWidth,而mMinWidth这个值对应andr:winWidth这个属性所对应的值，如果没有指定则为0；如果指定了背景那么View的宽度就是max(mMinWidth, mBackground.getMinimumWidth())
+
+	public int getMinimumWidth() {
+        final int intrinsicWidth = getIntrinsicWidth();
+        return intrinsicWidth > 0 ? intrinsicWidth : 0;
+    }
+
+从上面的代码可以看出，getIntrinsicHeight()就是获取背景的原有宽度，如果有又返回没有就返回0。
+
+
+小结，getSuggestedMinimumWidth 的逻辑:如果View 没有设置背景，
+返回android:minWidth 这个属性所指定的值，这个值可以为0; 如果View 设置了背景，则返回android:minWidth 和背景的最小宽度这两者中的最大值，getSuggestedMinimumWidth和getSuggestedMinimumHeight 的返回值就是View在UNSPECIFIED 情况下的测量宽/高。从getDefaultSize方法的实现来看，View的宽/高由specSize决定，所以我们可以得出如下结论: 直接继承View的自定义控件需要重写onMeasure方法并设置wrap_ content时的自身大小，否则在布局中使用wrap_ content就相当于使用match_parent.
+
+#### 3.2 ViewGroup的measure过程
+
+对于GroupView来说，除了完成自己的measure过程以外，还会遍历去调用所有子view的measure方法，和view不同的是，他是一个抽象类，也没有重写View的onMeasure()方法，但是提供了一个measureChildren()的方法.
+
+    protected void measureChildren(int widthMeasureSpec, int heightMeasureSpec) {
+        final int size = mChildrenCount;
+        final View[] children = mChildren;
+        for (int i = 0; i < size; ++i) {
+            final View child = children[i];
+            if ((child.mViewFlags & VISIBILITY_MASK) != GONE) {
+                measureChild(child, widthMeasureSpec, heightMeasureSpec);
+            }
+        }
+    }
+
+可以看出，该方法是判断view是否是GONE状态，不是的话就调用view的measureChild()方法。
+
+	 protected void measureChild(View child, int parentWidthMeasureSpec,
+            int parentHeightMeasureSpec) {
+        final LayoutParams lp = child.getLayoutParams();
+
+        final int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,
+                mPaddingLeft + mPaddingRight, lp.width);
+        final int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,
+                mPaddingTop + mPaddingBottom, lp.height);
+
+        child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+    }
+
+获取到子view的LayoutParams，然后得到view的MeasureSpec，然后传到view的measure中来测量。
+
+
+#### 3.3 layout
+
+Layout的作用是用于计算View的位置的，当ViewGroup的位置被确定之后，它会在他的onLayout()方法中遍历所有的子View。
+
+	 public void layout(int l, int t, int r, int b) {
+        if ((mPrivateFlags3 & PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT) != 0) {
+            onMeasure(mOldWidthMeasureSpec, mOldHeightMeasureSpec);
+            mPrivateFlags3 &= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
+        }
+
+        int oldL = mLeft;
+        int oldT = mTop;
+        int oldB = mBottom;
+        int oldR = mRight;
+
+        boolean changed = isLayoutModeOptical(mParent) ?
+                setOpticalFrame(l, t, r, b) : setFrame(l, t, r, b);
+
+        if (changed || (mPrivateFlags & PFLAG_LAYOUT_REQUIRED) == PFLAG_LAYOUT_REQUIRED) {
+            onLayout(changed, l, t, r, b);
+
+            if (shouldDrawRoundScrollbar()) {
+                if(mRoundScrollbarRenderer == null) {
+                    mRoundScrollbarRenderer = new RoundScrollbarRenderer(this);
+                }
+            } else {
+                mRoundScrollbarRenderer = null;
+            }
+
+            mPrivateFlags &= ~PFLAG_LAYOUT_REQUIRED;
+
+            ListenerInfo li = mListenerInfo;
+            if (li != null && li.mOnLayoutChangeListeners != null) {
+                ArrayList<OnLayoutChangeListener> listenersCopy =
+                        (ArrayList<OnLayoutChangeListener>)li.mOnLayoutChangeListeners.clone();
+                int numListeners = listenersCopy.size();
+                for (int i = 0; i < numListeners; ++i) {
+                    listenersCopy.get(i).onLayoutChange(this, l, t, r, b, oldL, oldT, oldR, oldB);
+                }
+            }
+        }
+
+        mPrivateFlags &= ~PFLAG_FORCE_LAYOUT;
+        mPrivateFlags3 |= PFLAG3_IS_LAID_OUT;
+
+        if ((mPrivateFlags3 & PFLAG3_NOTIFY_AUTOFILL_ENTER_ON_LAYOUT) != 0) {
+            mPrivateFlags3 &= ~PFLAG3_NOTIFY_AUTOFILL_ENTER_ON_LAYOUT;
+            notifyEnterOrExitForAutoFillIfNeeded(true);
+        }
+    }
+
+首先会调用setFrame方法来确定View四个顶点的位置，从而确定他们在父容器中的位置，然后通过调用onLayout()方法让父容器确定子元素的位置。
+
+#### 3.4 draw
+
+View的绘制有如下几个过程：
+
+1. 绘制背景 background.draw(canvas)
+2. 绘制自己 onDraw()
+3. 绘制children dispatchDraw
+4. 绘制装饰 onDrawScrollsBars
+
+ 

@@ -1,0 +1,50 @@
+---
+layout: post
+title: java基础知识整理（五）
+categories: Java
+description: java基础知识整理（五）
+keywords: Java, 数据结构
+---
+
+>Java中常用的数据结构主要分为Collection和map两种接口，只提供方法，具体实现由继承操作。
+
+### 一、结构
+
+list继承于Collection,常用的子接口有：
+
+- LinkedList 元素单个，随机查询效率低，适用于插入和删除
+- ArrayList 元素单个，效率高，多用于查询 
+- Vector 元素单个，线程安全，多用于查询
+- Set 去重，不同于上面几种是基于数组（array）实现的，他是在hashap的基础上实现的。
+
+Map
+
+- HashTable 元素成对，元素可为空 线程安全
+- HashMap 元素成对 元素和key都可以为空 
+- WeakHashMap 	弱引用的hashmap
+
+### 二、ArrayList和LinkedList的比较
+
+1. 时间复杂度
+	ArrayList内部是使用数组实现的，所以在使用get方法查询列表中任意一个数据的时候，他的查询速度大部分时间是高于LinkedList的，而LinkedList的get方法是从头开始查询，对他而言查询列表中的指定数据没有更快的方法了。
+	
+	当对需要对列表进行大量的插入或删除操作的时候，他们所花费的时间就有所不同。这是因为在arraylist中当一个元素被添加到开头时，其后所有的元素都会往后移动，这就存在数据移动和复制的开销，而LinkedList添加一个元素在开头的时候，只需要给这个元素分配一个记录，调整链接就ok。
+	
+	值得注意的是，当添加的数据在开头的时候LinkedList的开销是固定的，而arraylist在开头添加一个数据的开销是和他的大小成正比。
+		
+
+2. 空间复杂度
+
+	LinkedList内部使用双向链表的结构实现存储，有一个内部类作为存放元素的单元，里面有三个属性，用来存放元素本身以及前后2个单元的引用。
+
+		private static class Entry {   
+         Object element;   
+         Entry next;   
+         Entry previous;   
+   	  	}  
+     
+ 	ArrayList使用一个内置的数组来存储，创建的时候大小为10，当超过这个大小的时候使用 新容量=(旧容量*3)/2+1 这个公式来进行扩容，这就意味着一个问题，当添加的数据超过容量扩容后却不会填满，就会有很大的控件被浪费，因此当知道一个数组有多大的时候可以在创建的时候指定大小。
+
+3.  tips
+
+	当数据量很大的时候，两者的插入数据所花费的时间，arraylist会小于linkedlist，如果插入的位置在两端，后者效果更好，中间的时候arraylist效率会好点，查看源码并没有发现原因，猜测可能是因为linkedlist使用二分法查找数据，当数据很大而且插入的数据在中间的时候，查找的时间超过了arraylist复制数据的时间。
