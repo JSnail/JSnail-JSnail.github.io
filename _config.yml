@@ -99,6 +99,15 @@ gitalk:
     repo: JSnail.github.io
     clientID: 36fb7ca4674e808981f9
     clientSecret: cbe26b42dbaf83ccfdbd411f5801905a3d7dc210
+
+deploy:   
+  type: git  
+  branch: master  
+  repo:   
+    github: git@github.com:JSnail.coding.me/Snail 
+    coding: git@git.coding.net:git.coding.net/JSnail/Snail.git 
+
+
 # 在使用其它评论组件时可点击显示 Disqus
 lazy_load_disqus : false
 
