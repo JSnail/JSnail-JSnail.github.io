@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 设计模式（二）之单例模式
+title: 设计模式（二）之状态模式
 categories: DesignMode
 description: 状态模式
 keywords: 状态模式, state
