@@ -13,12 +13,16 @@ keywords: Java, 反射,StringBuilder, StringBuffer
 
   String类中使用字符数组保存字符串,并且由final修饰，是不可变的
 
-		private final char value[];
-	
+  ```java
+  private final char value[];
+  ```
+
   StringBuilder和StringBuffer的父类是AbstractStringBuilder，同样是使用字符数组保存字符串，但是没有用final修饰
 
-		char[] value;
-由于string一旦创建之后不可修改，所以每次拼接字符串都是在重新创建一个string对象，jvm会频繁的gc因此在有很多字符串拼接的时候不用考虑string，运行效率低于后面2个。
+  ```java
+  char[] value;
+  ```
+  由于string一旦创建之后不可修改，所以每次拼接字符串都是在重新创建一个string对象，jvm会频繁的gc因此在有很多字符串拼接的时候不用考虑string，运行效率低于后面2个。
 
 2. 线程安全
 

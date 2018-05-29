@@ -21,7 +21,7 @@ Map
 
 - HashTable 元素成对，元素可为空 线程安全
 - HashMap 元素成对 元素和key都可以为空 
-- WeakHashMap 	弱引用的hashmap
+	 WeakHashMap 	弱引用的hashmap
 
 ### 二、ArrayList和LinkedList的比较
 
@@ -35,15 +35,18 @@ Map
 
 2. 空间复杂度
 
-	LinkedList内部使用双向链表的结构实现存储，有一个内部类作为存放元素的单元，里面有三个属性，用来存放元素本身以及前后2个单元的引用。
+  LinkedList内部使用双向链表的结构实现存储，有一个内部类作为存放元素的单元，里面有三个属性，用来存放元素本身以及前后2个单元的引用。
 
-		private static class Entry {   
-         Object element;   
-         Entry next;   
-         Entry previous;   
-   	  	}  
-     
- 	ArrayList使用一个内置的数组来存储，创建的时候大小为10，当超过这个大小的时候使用 新容量=(旧容量*3)/2+1 这个公式来进行扩容，这就意味着一个问题，当添加的数据超过容量扩容后却不会填满，就会有很大的控件被浪费，因此当知道一个数组有多大的时候可以在创建的时候指定大小。
+  ```java
+  private static class Entry {   
+     Object element;   
+     Entry next;   
+     Entry previous;   
+    } 
+  ```
+   
+
+  	ArrayList使用一个内置的数组来存储，创建的时候大小为10，当超过这个大小的时候使用 新容量=(旧容量*3)/2+1 这个公式来进行扩容，这就意味着一个问题，当添加的数据超过容量扩容后却不会填满，就会有很大的控件被浪费，因此当知道一个数组有多大的时候可以在创建的时候指定大小。
 
 3.  tips
 

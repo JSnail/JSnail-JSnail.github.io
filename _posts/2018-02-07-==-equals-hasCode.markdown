@@ -17,33 +17,39 @@ keywords: equals，hashCode
     用于基本数据类型之间的值的比较
 
 
-2. 	引用类型（类、接口、数组等等）
+2. 引用类型（类、接口、数组等等）
 
-	当他们进行比较的时候，比较的是他们在内存中的内存地址，除非是同一个对象，他们的值永远为false。
-	
-	由于对象是放在堆中的，对象的引用或者说内存地址是存放在栈中，因此要比较堆中的对象，就需要使用equals()方法了，可以使用int 和integer的比较来判断，例如：
+  当他们进行比较的时候，比较的是他们在内存中的内存地址，除非是同一个对象，他们的值永远为false。
 
-		int a =1;
-		Integer b1 =1;
-		Integer b2 = new Integer(1);
-		Integer b3 = new Integer(10);
-		Integer b4 = 10;
+  由于对象是放在堆中的，对象的引用或者说内存地址是存放在栈中，因此要比较堆中的对象，就需要使用equals()方法了，可以使用int 和integer的比较来判断，例如：
+
+  ```java
+  int a =1;
+  Integer b1 =1;
+  Integer b2 = new Integer(1);
+  Integer b3 = new Integer(10);
+  Integer b4 = 10;
+  ```
 
 以上代码的一些比较结果如下
 
-		a == b1;//true
-		a == b2;//true
-		b1 == b2;//false 
-		b3 == b4;//true 
+```java
+	a == b1;//true
+	a == b2;//true
+	b1 == b2;//false 
+	b3 == b4;//true 
+```
 
 上方 b3==b4结果为true是因为在java中有如下一段代码
 
-		public static Integer valueOf(int i) {  
-          assert IntegerCache.high >= 127;  
-             if (i >= IntegerCache.low && i <=IntegerCache.high)  
-                  return IntegerCache.cache[i + (-IntegerCache.low)];  
-         return new Integer(i);  
-     } 
+```java
+public static Integer valueOf(int i) {  
+      assert IntegerCache.high >= 127;  
+         if (i >= IntegerCache.low && i <=IntegerCache.high)  
+              return IntegerCache.cache[i + (-IntegerCache.low)];  
+     return new Integer(i);  
+ } 
+```
 
 由源码可知java会缓存-127到127之间的值，当b4重新被赋值为10的时候，会直接从缓存里面获取，不会重新创建因此b3==b4的为true。
 
@@ -56,18 +62,23 @@ keywords: equals，hashCode
     	         return (this == obj);  
    			 } 
 
-2.	在有重写父类的equals()的方法的时候就需要根据重写的方法具体去判断了
+	.	在有重写父类的equals()的方法的时候就需要根据重写的方法具体去判断了
 3. equals有4点需要注意
 
 - 非空性：任何非空的值调用equals去比较null的时候一定为false
+
 - 对称性：a.equals(b)为true，反之也为true
+
 - 传递性：如果a.equals(b)=true, b.equals(c)=true,那么a.equals(c)=true 
+
 - 一致性：当参与比较的对象没有变化的时候，比较的结果也不会变
 
-#### 3.	hashcode
+  ### 3.	hashcode
 
-		public native int hashCode();  
-		
+  ```java
+  public native int hashCode();  
+  ```
+
 object中的hashCode()方法就返回一个int值，他的主要作用是对象进行散列的时候作为一个key，因此生成的key是通过哈希算法，将数据依特定算法直接指定到一个地址上，同时也保证了每个值的不同。
 
 在java中有list和set两种不同的集合，前者元素有序可重复，后者无序不可重复，这里就存在一个问题，怎么判断不能重复呢？如果是单纯的调用equals()方法，每添加一个元素就要去比较一次，当比较的体量足够大的时候，效率简直是惨不忍睹，于是hashcode就站了出来。
