@@ -27,7 +27,7 @@ keywords: equals，hashCode
   int a =1;
   Integer b1 =1;
   Integer b2 = new Integer(1);
-  Integer b3 = new Integer(10);
+  Integer b3 = Integer.valueOf(10);
   Integer b4 = 10;
   ```
 
@@ -35,12 +35,12 @@ keywords: equals，hashCode
 
 ```java
 	a == b1;//true
-	a == b2;//true
+	a == b2;//false
 	b1 == b2;//false 
 	b3 == b4;//true 
 ```
 
-上方 b3==b4结果为true是因为在java中有如下一段代码
+Integer变量和int变量比较时，只要两个变量的值是向等的，则结果为true（因为包装类Integer和基本数据类型int比较时，java会自动拆箱为int，然后进行比较，实际上就变为两个int变量的比较，所以a==b1为true，而 b3==b4结果为true是因为在java中有如下一段代码
 
 ```java
 public static Integer valueOf(int i) {  
@@ -60,7 +60,7 @@ public static Integer valueOf(int i) {
 
 		public boolean equals(Object obj) {  
     	         return (this == obj);  
-   			 } 
+   ​			 } 
 
 	.	在有重写父类的equals()的方法的时候就需要根据重写的方法具体去判断了
 3. equals有4点需要注意

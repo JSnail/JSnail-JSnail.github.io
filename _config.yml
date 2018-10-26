@@ -20,7 +20,7 @@ organization:
 organization_url: 
 github_username: JSnail
 location: ChenDu, China
-email: 484276447@qq.com
+email: 793058177@qq.com
 
 # ---------------- #
 #    Navigation    #
@@ -38,9 +38,9 @@ navs:
 #     href: /archives/
 #     label: 归档
 
-  -
-    href: /wiki/
-    label: 维基
+  # -
+  #   href: /wiki/
+  #   label: 维基
 
   -
     href: /links/

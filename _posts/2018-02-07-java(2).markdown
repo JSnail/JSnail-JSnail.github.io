@@ -22,11 +22,11 @@ keywords: Java, 反射,StringBuilder, StringBuffer
   ```java
   char[] value;
   ```
-  由于string一旦创建之后不可修改，所以每次拼接字符串都是在重新创建一个string对象，jvm会频繁的gc因此在有很多字符串拼接的时候不用考虑string，运行效率低于后面2个。
+  由于string一旦创建之后不可修改，所以每次拼接字符串都是在重新创建一个string对象，现在查看编译后的java代码可以发现，java有在一定范围内帮我们优化了string+string这种字符串的拼接，实际上也是使用的StringBuilder，但是并不是说我们就能直接使用字符串拼接的方式。
 
 2. 线程安全
 
-	StringBuilder是线程不安全的，而StringBuffer是线程安全的。
+  StringBuilder是线程不安全的，而StringBuffer是线程安全的。
 
 ### 2.final，finally，finalize的区别
 
